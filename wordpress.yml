@@ -1,0 +1,38 @@
+---
+- name: 'Creating VirtualHost Configuration File'
+  hosts: amazon
+  become: yes
+  vars:
+    domain: www.example.com
+    mysql_root_password: mysqlroot123
+    mysql_user: wpuser
+    mysql_password: wpuser123
+    mysql_database: wordpress 
+        
+  tasks:
+    - name: 'Installing Apache'
+      yum: name=httpd,php,php-mysql state=present
+        
+    - name: 'Creating Virtualhost Configuration File'
+      template:
+        src: virtualhost.j2
+        dest: /etc/httpd/conf.d/{{domain}}.conf
+    
+    - name: 'Creating Document Root'
+      file:
+        path: /var/www/html/{{domain}}
+        state: directory
+        owner: apache
+        group: apache
+        mode: 0755
+            
+    - name: 'Creating index.html'
+      copy:
+        content: '<h1><center>It Works</center></h1>'
+        dest: /var/www/html/{{domain}}/index.html
+            
+    - name: 'Restarting Apache Webserver'
+      service:
+        name: httpd
+        state: restarted
+        enabled: true
